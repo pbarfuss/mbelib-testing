@@ -248,7 +248,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
           k++;
       }
       bm = strtol (tmpstr, NULL, 2);
-      Gm[i] = (*ba2 * ((float) bm - expf((float)M_LN2 * (*ba1 - 1)) + (float) 0.5f));
+      Gm[i] = (*ba2 * ((float) bm - mbe_expf((float)M_LN2 * (*ba1 - 1)) + (float) 0.5f));
 #ifdef IMBE_DEBUG
       printf ("G%i: %e, %s, %i, ba1: %e, ba2: %e\n", i, Gm[i], tmpstr, bm, *ba1, *ba2);
 #endif
@@ -265,7 +265,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
           } else {
               am = 2;
           }
-          sum = sum + ((float) am * Gm[m] * cosf ((M_PI * (float) (m - 1) * ((float) i - 0.5)) / (float) 6));
+          sum = sum + ((float) am * Gm[m] * mbe_cosf ((M_PI * (float) (m - 1) * ((float) i - 0.5)) / (float) 6));
 #ifdef IMBE_DEBUG
           printf ("sum: %e ", sum);
 #endif
@@ -293,7 +293,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
           } else {
               tmpstr[Bm] = 0;
               bm = strtol (tmpstr, NULL, 2);
-              Cik[i][k] = ((quantstep[Bm - 1] * standdev[k - 2]) * (((float) bm - expf((float)M_LN2 * (Bm - 1))) + 0.5));
+              Cik[i][k] = ((quantstep[Bm - 1] * standdev[k - 2]) * (((float) bm - mbe_expf((float)M_LN2 * (Bm - 1))) + 0.5));
           }
           m++;
       }
@@ -311,7 +311,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
               } else {
                   ak = 2;
               }
-              sum = sum + ((float) ak * Cik[i][k] * cosf ((M_PI * (float) (k - 1) * ((float) j - 0.5)) / (float) ji));
+              sum = sum + ((float) ak * Cik[i][k] * mbe_cosf ((M_PI * (float) (k - 1) * ((float) j - 0.5)) / (float) ji));
           }
           Tl[l] = sum;
           l++;
@@ -366,7 +366,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
       c1 = (rho * ((float) 1 - deltal[l]) * prev_mp->log2Ml[intkl[l]]);
       c2 = (rho * deltal[l] * prev_mp->log2Ml[intkl[l] + 1]);
       cur_mp->log2Ml[l] = Tl[l] + c1 + c2 - Sum77;
-      cur_mp->Ml[l] = expf((float)M_LN2 * cur_mp->log2Ml[l]);
+      cur_mp->Ml[l] = mbe_expf((float)M_LN2 * cur_mp->log2Ml[l]);
 #ifdef IMBE_DEBUG
       printf ("rho: %e c1: %e c2: %e Sum77: %e T%i: %e log2M%i: %e M%i: %e\n", rho, c1, c2, Sum77, l, Tl[l], l, cur_mp->log2Ml[l], l, cur_mp->Ml[l]);
 #endif
