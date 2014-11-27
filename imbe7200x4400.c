@@ -265,7 +265,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
           } else {
               am = 2;
           }
-          sum = sum + ((float) am * Gm[m] * mbe_cosf (((float)M_PI * (float) (m - 1) * ((float) i - 0.5)) / (float) 6));
+          sum = sum + ((float) am * Gm[m] * mbe_cosf (((float)M_PI * (float) (m - 1) * ((float) i - 0.5f)) / (float) 6));
 #ifdef IMBE_DEBUG
           printf ("sum: %e ", sum);
 #endif
@@ -293,7 +293,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
           } else {
               tmpstr[Bm] = 0;
               bm = strtol (tmpstr, NULL, 2);
-              Cik[i][k] = ((quantstep[Bm - 1] * standdev[k - 2]) * (((float) bm - mbe_expf((float)M_LN2 * (Bm - 1))) + 0.5));
+              Cik[i][k] = ((quantstep[Bm - 1] * standdev[k - 2]) * (((float) bm - mbe_expf((float)M_LN2 * (Bm - 1))) + 0.5f));
           }
           m++;
       }
@@ -311,7 +311,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
               } else {
                   ak = 2;
               }
-              sum = sum + ((float) ak * Cik[i][k] * mbe_cosf (((float)M_PI * (float) (k - 1) * ((float) j - 0.5)) / (float) ji));
+              sum = sum + ((float) ak * Cik[i][k] * mbe_cosf (((float)M_PI * (float) (k - 1) * ((float) j - 0.5f)) / (float) ji));
           }
           Tl[l] = sum;
           l++;
