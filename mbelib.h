@@ -106,6 +106,8 @@ void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, cha
  * Prototypes from ambe3600x2450.c
  */
 int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp);
+void mbe_processAmbe2450Dataf (float *aout_buf, int bad, int *errs, int *errs2, char ambe_d[49],
+                               mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
