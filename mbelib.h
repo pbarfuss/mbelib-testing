@@ -93,20 +93,20 @@ int mbe_golay2312 (char *in, char *out);
 int mbe_eccAmbe3600x24x0C0 (char ambe_fr[4][24]);
 int mbe_eccAmbe3600x24x0Data (char ambe_fr[4][24], char *ambe_d);
 void mbe_demodulateAmbe3600x24x0Data (char ambe_fr[4][24]);
-void mbe_processAmbe24x0Dataf (float *aout_buf, int bad, int *errs, int *errs2, char *err_str, char ambe_d[49],
-                               mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
+void mbe_processAmbe24x0Dataf (float *aout_buf, int bad, int *errs, int *errs2, char ambe_d[49],
+                               mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from ambe3600x2400.c
  */
 int mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp);
-void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
+void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from ambe3600x2450.c
  */
 int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp);
-void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
+void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from imbe7200x4400.c

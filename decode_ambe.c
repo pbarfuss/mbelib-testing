@@ -79,7 +79,6 @@ static void writeSynthesizedVoice (int wav_out_fd, dsd_state *state)
   for (n = 0; n < 160; n++) {
     float tmp = state->audio_out_temp_buf[n];
 
-    tmp *= 24.0f;
     if (tmp > 32767.0f) {
         tmp = 32767.0f;
     } else if (tmp < -32767.0f) {
