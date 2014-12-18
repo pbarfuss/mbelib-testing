@@ -12,9 +12,10 @@ typedef struct
 {
   unsigned char *mbe_in_data;
   unsigned int mbe_in_pos, mbe_in_size;
-  float audio_out_temp_buf[160];
+  float audio_out_temp_buf[960];
   int errs;
   int errs2;
+  char err_str[64];
   mbe_parms cur_mp;
   mbe_parms prev_mp;
   mbe_parms prev_mp_enhanced;
@@ -70,6 +71,13 @@ static void openMbeInFile (const char *mbe_in_file, dsd_state *state)
   }
 }
 
+static inline float av_clipf(float a, float amin, float amax)
+{
+    if      (a < amin) return amin;
+    else if (a > amax) return amax;
+    else               return a;
+}
+
 static void writeSynthesizedVoice (int wav_out_fd, dsd_state *state)
 {
   short aout_buf[160];
@@ -78,12 +86,15 @@ static void writeSynthesizedVoice (int wav_out_fd, dsd_state *state)
   for (n = 0; n < 160; n++) {
     float tmp = state->audio_out_temp_buf[n];
 
+    //update_volume(&s, fabsf(tmp));
+    //tmp = av_clipf(tmp * get_volume(&s), -1.0f, 1.0f);
+
     if (tmp > 32767.0f) {
         tmp = 32767.0f;
     } else if (tmp < -32767.0f) {
         tmp = -32767.0f;
     }
-    aout_buf[n] = (short) lrintf(tmp);
+    aout_buf[n] = lrintf(tmp);
   }
 
   write(wav_out_fd, aout_buf, 160 * sizeof(int16_t));
@@ -153,14 +164,23 @@ int main(int argc, char **argv) {
     mbe_initMbeParms (&state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced);
     printf ("Playing %s\n", argv[1]);
     while (state.mbe_in_pos < state.mbe_in_size) {
-        unsigned int bad;
+        unsigned int i, bad;
+        char *err_str = state.err_str;
         readAmbe2450Data (&state, ambe_d);
+        for (i = 0; i < state.errs2; i++) {
+            *err_str++ = '=';
+        }
         bad = mbe_decodeAmbe2450Parms (ambe_d, &state.cur_mp, &state.prev_mp);
         if (bad) {
             printf("decodeAmbe2400Parms: bad = %u\n", bad);
         }
-        mbe_processAmbe2450Dataf (state.audio_out_temp_buf, bad, &state.errs, &state.errs2, ambe_d,
-                                  &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+        if (!bad) {
+            mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
+                                      &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+        }
+        if (bad) {
+            printf("decodeAmbe2400Parms: errs: %u, errs2: %u, err_str: %s\n", state.errs, state.errs2, state.err_str);
+        }
         writeSynthesizedVoice (out_fd, &state);
     }
     close(out_fd);

@@ -18,64 +18,52 @@
 #include <math.h>
 #include "ecc_const.h"
 
-void mbe_checkGolayBlock (long int *block)
+void mbe_checkGolayBlock (unsigned int *block)
 {
-  static int i, syndrome, eccexpected, eccbits, databits;
-  long int mask, block_l;
-
-  block_l = *block;
+  static unsigned int i, syndrome, eccexpected, eccbits, databits;
+  unsigned int mask, block_l = *block;
 
   mask = 0x400000l;
   eccexpected = 0;
-  for (i = 0; i < 12; i++)
-    {
-      if ((block_l & mask) != 0l)
-        {
+  for (i = 0; i < 12; i++) {
+      if ((block_l & mask) != 0l) {
           eccexpected ^= golayGenerator[i];
-        }
+      }
       mask = mask >> 1;
-    }
-  eccbits = (int) (block_l & 0x7ffl);
+  }
+
+  eccbits =  (block_l & 0x7ffl);
   syndrome = eccexpected ^ eccbits;
-
-  databits = (int) (block_l >> 11);
+  databits = (block_l >> 11);
   databits = databits ^ golayMatrix[syndrome];
-
-  *block = (long) databits;
+  *block = databits;
 }
 
-int mbe_golay2312 (char *in, char *out)
+unsigned int mbe_golay2312 (char *in, char *out)
 {
-  int i, errs;
-  long block;
+  int i;
+  unsigned int errs = 0, block = 0;
 
-  block = 0;
-  for (i = 22; i >= 0; i--)
-    {
+  for (i = 22; i >= 0; i--) {
       block = block << 1;
       block = block + in[i];
-    }
+  }
 
   mbe_checkGolayBlock (&block);
 
-  for (i = 22; i >= 11; i--)
-    {
+  for (i = 22; i >= 11; i--) {
       out[i] = (block & 2048) >> 11;
       block = block << 1;
-    }
-  for (i = 10; i >= 0; i--)
-    {
+  }
+  for (i = 10; i >= 0; i--) {
       out[i] = in[i];
-    }
+  }
 
-  errs = 0;
-  for (i = 22; i >= 11; i--)
-    {
-      if (out[i] != in[i])
-        {
+  for (i = 22; i >= 11; i--) {
+      if (out[i] != in[i]) {
           errs++;
-        }
-    }
+      }
+  }
   return (errs);
 }
 

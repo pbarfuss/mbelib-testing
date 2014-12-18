@@ -565,49 +565,58 @@ void mbe_demodulateAmbe3600x24x0Data (char ambe_fr[4][24])
   }
 }
 
-void mbe_processAmbe24x0Dataf (float *aout_buf, int bad, int *errs, int *errs2, char ambe_d[49],
+void mbe_processAmbe24x0Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
-  if (bad == 2) {
-      // Erasure frame
-      cur_mp->repeat = 0;
-  } else if (bad == 3) {
-      // Tone Frame
-      cur_mp->repeat = 0;
-  } else if (*errs2 > 3) {
+  if (*errs2 > 3) {
       mbe_useLastMbeParms (cur_mp, prev_mp);
       cur_mp->repeat++;
+      *err_str++ = 'R';
   } else {
       cur_mp->repeat = 0;
   }
-
-  if (bad == 0) {
-      if (cur_mp->repeat <= 3) {
-          mbe_moveMbeParms (cur_mp, prev_mp);
-          mbe_spectralAmpEnhance (cur_mp);
-          mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
-          mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
-      } else {
-          mbe_synthesizeSilencef (aout_buf);
-          mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
-      }
+  if (cur_mp->repeat <= 3) {
+      mbe_moveMbeParms (cur_mp, prev_mp);
+      mbe_spectralAmpEnhance (cur_mp);
+      mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
+      mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
   } else {
+      *err_str++ = 'M';
       mbe_synthesizeSilencef (aout_buf);
       mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
   }
+  *err_str = 0;
 }
 
-void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char ambe_fr[4][24], char ambe_d[49],
+void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
                                      mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
-  unsigned int bad;
+  unsigned int i, bad;
   *errs = 0;
   *errs2 = 0;
   *errs = mbe_eccAmbe3600x24x0C0 (ambe_fr);
   mbe_demodulateAmbe3600x24x0Data (ambe_fr);
   *errs2 = *errs;
   *errs2 += mbe_eccAmbe3600x24x0Data (ambe_fr, ambe_d);
+  for (i = 0; i < *errs2; i++) {
+      *err_str++ = '=';
+  }
   bad = mbe_decodeAmbe2400Parms (ambe_d, cur_mp, prev_mp);
-  mbe_processAmbe24x0Dataf (aout_buf, bad, errs, errs2, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  if (bad == 0) {
+    mbe_processAmbe24x0Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  } else {
+    if (bad == 2) {
+      // Erasure frame
+      *err_str++ = 'E';
+      cur_mp->repeat = 0;
+    } else if (bad == 3) {
+      // Tone Frame
+      *err_str++ = 'T';
+      cur_mp->repeat = 0;
+    }
+    *err_str = 0;
+    mbe_synthesizeSilencef (aout_buf);
+    mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
+  }
 }
 
