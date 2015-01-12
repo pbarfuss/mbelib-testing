@@ -21,11 +21,15 @@
 #ifndef _ECC_H
 #define _ECC_H
 
-const int golayGenerator[12] = {
+const unsigned int hammingGenerator[4] = {
+  0x7f08, 0x78e4, 0x66d2, 0x55b1
+};
+
+const unsigned int golayGenerator[12] = {
   0x63a, 0x31d, 0x7b4, 0x3da, 0x1ed, 0x6cc, 0x366, 0x1b3, 0x6e3, 0x54b, 0x49f, 0x475
 };
 
-const int golayMatrix[2048] = {
+const unsigned int golayMatrix[2048] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 0, 0, 0, 0, 0, 2084, 0, 0, 0, 769, 0, 1024, 144,
   2, 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 0, 72, 0, 72, 72, 72, 0, 0, 0, 16, 0, 1, 1538, 384, 0, 134, 2048, 1056, 288,
   2576, 5, 72, 0, 0, 0, 0, 0, 0, 0, 1280, 0, 0, 0, 4, 0, 546, 144, 2049, 0, 0, 0, 66, 0, 1, 144, 520, 0, 2056, 144,

@@ -25,7 +25,7 @@ DEST_INC=${DEST_BASE}/include
 DEST_LIB=${DEST_BASE}/lib
 DEST_BIN=${DEST_BASE}/bin
 
-all: decode_ambe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o ecc.o minilibm.o imbe7200x4400.o imbe7100x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+all: decode_ambe decode_imbe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o decode_imbe.o ecc.o minilibm.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 
 build: all
 
@@ -37,9 +37,6 @@ minilibm.o: minilibm.c
 
 imbe7200x4400.o: imbe7200x4400.c mbelib.h mbelib_const.h imbe7200x4400_const.h
 	$(CC) $(CFLAGS) -c imbe7200x4400.c -o imbe7200x4400.o $(INCLUDES)
-
-imbe7100x4400.o: imbe7100x4400.c mbelib.h mbelib_const.h
-	$(CC) $(CFLAGS) -c imbe7100x4400.c -o imbe7100x4400.o $(INCLUDES)
 
 ambe3600x2400.o: ambe3600x2400.c mbelib.h mbelib_const.h ambe3600x2400_const.h
 	$(CC) $(CFLAGS) -c ambe3600x2400.c -o ambe3600x2400.o $(INCLUDES)
@@ -53,13 +50,16 @@ mbelib.o: mbelib.c mbelib.h
 decode_ambe.o: decode_ambe.c
 	$(CC) $(CFLAGS) -c decode_ambe.c -o decode_ambe.o $(INCLUDES)
 
-libmbe.a: ecc.o minilibm.o imbe7200x4400.o imbe7100x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
-	$(AR) cru libmbe.a ecc.o minilibm.o imbe7200x4400.o imbe7100x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+decode_imbe.o: decode_imbe.c
+	$(CC) $(CFLAGS) -c decode_imbe.c -o decode_imbe.o $(INCLUDES)
+
+libmbe.a: ecc.o minilibm.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
+	$(AR) cru libmbe.a ecc.o minilibm.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 	$(RANLIB) libmbe.a
 
-libmbe.so.1: ecc.o minilibm.o imbe7200x4400.o imbe7100x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
+libmbe.so.1: ecc.o minilibm.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
 	$(CC) -shared -Wl,-soname,libmbe.so.1 -o libmbe.so.1 \
-         ecc.o minilibm.o imbe7200x4400.o imbe7100x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+         ecc.o minilibm.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 
 libmbe.so: libmbe.so.1
 	rm -f libmbe.so
@@ -67,6 +67,9 @@ libmbe.so: libmbe.so.1
 
 decode_ambe: decode_ambe.o libmbe.a
 	$(CC) -o decode_ambe decode_ambe.o libmbe.a
+
+decode_imbe: decode_imbe.o libmbe.a
+	$(CC) -o decode_imbe decode_imbe.o libmbe.a
 
 clean:
 	rm -f *.o
@@ -79,6 +82,7 @@ install: libmbe.a libmbe.so.1 libmbe.so
 	$(INSTALL) libmbe.so.1 $(DEST_LIB)
 	$(INSTALL) libmbe.so $(DEST_LIB)
 	$(INSTALL) decode_ambe $(DEST_BIN)
+	$(INSTALL) decode_imbe $(DEST_BIN)
 	$(LDCONFIG) $(DEST_LIB)
 
 uninstall: 
@@ -87,4 +91,5 @@ uninstall:
 	rm -f $(DEST_LIB)/libmbe.so.1
 	rm -f $(DEST_LIB)/libmbe.so
 	rm -f $(DEST_BIN)/decode_ambe
+	rm -f $(DEST_BIN)/decode_imbe
 

@@ -164,23 +164,11 @@ int main(int argc, char **argv) {
     mbe_initMbeParms (&state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced);
     printf ("Playing %s\n", argv[1]);
     while (state.mbe_in_pos < state.mbe_in_size) {
-        unsigned int i, bad;
         char *err_str = state.err_str;
         readAmbe2450Data (&state, ambe_d);
-        for (i = 0; i < state.errs2; i++) {
-            *err_str++ = '=';
-        }
-        bad = mbe_decodeAmbe2450Parms (ambe_d, &state.cur_mp, &state.prev_mp);
-        if (bad) {
-            printf("decodeAmbe2400Parms: bad = %u\n", bad);
-        }
-        if (!bad) {
-            mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
-                                      &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
-        }
-        if (bad) {
-            printf("decodeAmbe2400Parms: errs: %u, errs2: %u, err_str: %s\n", state.errs, state.errs2, state.err_str);
-        }
+        mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
+                                  &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+        printf("decodeAmbe2400Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
         writeSynthesizedVoice (out_fd, &state);
     }
     close(out_fd);

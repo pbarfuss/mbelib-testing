@@ -21,21 +21,21 @@
 /*
  * Quantizer step size for higher order DCT coefficients
  */
-const float quantstep[11] = {
+static const float quantstep[11] = {
   1.2, 0.85, 0.65, 0.40, 0.28, 0.15, 0.08, 0.04, 0.02, 0.01
 };
 
 /*
  * Standard Dev. for higer order DCT coefficients
  */
-const float standdev[9] = {
+static const float standdev[9] = {
   0.307, 0.241, 0.207, 0.190, 0.179, 0.173, 0.165, 0.170, 0.170
 };
 
 /*
  *
  */
-const float B2[64] = {
+static const float B2[64] = {
   -2.842205, -2.694235, -2.558260, -2.382850,
   -2.221042, -2.095574, -1.980845, -1.836058,
   -1.645556, -1.417658, -1.261301, -1.125631,
@@ -57,7 +57,7 @@ const float B2[64] = {
 /*
  * bit allocation and step size for transformed gain vector
  */
-const float ba[48][5][2] = {
+static const float ba[48][5][2] = {
 
   // L=9
   10, 0.003100, 9, 0.004020, 9, 0.003360, 9, 0.002900, 9, 0.002640,

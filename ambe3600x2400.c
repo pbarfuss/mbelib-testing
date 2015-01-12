@@ -22,7 +22,7 @@
 #include "mbelib.h"
 #include "ambe3600x2400_const.h"
 
-int mbe_eccAmbe3600x24x0C0(char ambe_fr[4][24])
+int mbe_eccAmbe3600x2400C0(char ambe_fr[4][24])
 {
   int j, errs;
   char in[23], out[23];
@@ -40,7 +40,7 @@ int mbe_eccAmbe3600x24x0C0(char ambe_fr[4][24])
   return (errs);
 }
 
-int mbe_eccAmbe3600x24x0Data(char ambe_fr[4][24], char *ambe_d)
+int mbe_eccAmbe3600x2400Data(char ambe_fr[4][24], char *ambe_d)
 {
   int j, errs;
   char *ambe, gin[24], gout[24];
@@ -48,8 +48,7 @@ int mbe_eccAmbe3600x24x0Data(char ambe_fr[4][24], char *ambe_d)
   ambe = ambe_d;
   // just copy C0
   for (j = 23; j > 11; j--) {
-      *ambe = ambe_fr[0][j];
-      ambe++;
+      *ambe++ = ambe_fr[0][j];
   }
 
   // ecc and copy C1
@@ -57,9 +56,9 @@ int mbe_eccAmbe3600x24x0Data(char ambe_fr[4][24], char *ambe_d)
       gin[j] = ambe_fr[1][j];
   }
   errs = mbe_golay2312 (gin, gout);
+
   for (j = 22; j > 10; j--) {
-      *ambe = gout[j];
-      ambe++;
+      *ambe++ = gout[j];
   }
 
   // just copy C2
@@ -538,7 +537,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   return (0);
 }
 
-void mbe_demodulateAmbe3600x24x0Data (char ambe_fr[4][24])
+void mbe_demodulateAmbe3600x2400Data (char ambe_fr[4][24])
 {
   int i, j, k;
   unsigned short pr[115];
@@ -565,45 +564,33 @@ void mbe_demodulateAmbe3600x24x0Data (char ambe_fr[4][24])
   }
 }
 
-void mbe_processAmbe24x0Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
+void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
-  if (*errs2 > 3) {
-      mbe_useLastMbeParms (cur_mp, prev_mp);
-      cur_mp->repeat++;
-      *err_str++ = 'R';
-  } else {
-      cur_mp->repeat = 0;
-  }
-  if (cur_mp->repeat <= 3) {
-      mbe_moveMbeParms (cur_mp, prev_mp);
-      mbe_spectralAmpEnhance (cur_mp);
-      mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
-      mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
-  } else {
-      *err_str++ = 'M';
-      mbe_synthesizeSilencef (aout_buf);
-      mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
-  }
-  *err_str = 0;
-}
-
-void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
-                                     mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
-{
   unsigned int i, bad;
-  *errs = 0;
-  *errs2 = 0;
-  *errs = mbe_eccAmbe3600x24x0C0 (ambe_fr);
-  mbe_demodulateAmbe3600x24x0Data (ambe_fr);
-  *errs2 = *errs;
-  *errs2 += mbe_eccAmbe3600x24x0Data (ambe_fr, ambe_d);
   for (i = 0; i < *errs2; i++) {
       *err_str++ = '=';
   }
   bad = mbe_decodeAmbe2400Parms (ambe_d, cur_mp, prev_mp);
   if (bad == 0) {
-    mbe_processAmbe24x0Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+      if (*errs2 > 3) {
+          mbe_useLastMbeParms (cur_mp, prev_mp);
+          cur_mp->repeat++;
+          *err_str++ = 'R';
+      } else {
+          cur_mp->repeat = 0;
+      }
+      if (cur_mp->repeat <= 3) {
+          mbe_moveMbeParms (cur_mp, prev_mp);
+          mbe_spectralAmpEnhance (cur_mp);
+          mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
+          mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
+      } else {
+          *err_str++ = 'M';
+          mbe_synthesizeSilencef (aout_buf);
+          mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
+      }
+      *err_str = 0;
   } else {
     if (bad == 2) {
       // Erasure frame
@@ -618,5 +605,14 @@ void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, cha
     mbe_synthesizeSilencef (aout_buf);
     mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
   }
+}
+
+void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
+                                     mbe_parms *cur_mp, mbe_parms *prev_mp, mbe_parms *prev_mp_enhanced, unsigned int uvquality)
+{
+  *errs2 = mbe_eccAmbe3600x2400C0 (ambe_fr);
+  mbe_demodulateAmbe3600x2400Data (ambe_fr);
+  *errs2 += mbe_eccAmbe3600x2400Data (ambe_fr, ambe_d);
+  mbe_processAmbe2400Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 

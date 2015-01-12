@@ -500,42 +500,30 @@ void mbe_demodulateAmbe3600x2450Data (char ambe_fr[4][24])
 void mbe_processAmbe2450Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
-  if (*errs2 > 3) {
-      mbe_useLastMbeParms (cur_mp, prev_mp);
-      cur_mp->repeat++;
-      *err_str++ = 'R';
-  } else {
-      cur_mp->repeat = 0;
-  }
-  if (cur_mp->repeat <= 3) {
-      mbe_moveMbeParms (cur_mp, prev_mp);
-      mbe_spectralAmpEnhance (cur_mp);
-      mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
-      mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
-  } else {
-      *err_str++ = 'M';
-      mbe_synthesizeSilencef (aout_buf);
-      mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
-  }
-  *err_str = 0;
-}
-
-void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
-                                     mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
-{
   unsigned int i, bad;
-  *errs = 0;
-  *errs2 = 0;
-  *errs = mbe_eccAmbe3600x2450C0 (ambe_fr);
-  mbe_demodulateAmbe3600x2450Data (ambe_fr);
-  *errs2 = *errs;
-  *errs2 += mbe_eccAmbe3600x2450Data (ambe_fr, ambe_d);
   for (i = 0; i < *errs2; i++) {
       *err_str++ = '=';
   }
   bad = mbe_decodeAmbe2450Parms (ambe_d, cur_mp, prev_mp);
   if (bad == 0) {
-    mbe_processAmbe2450Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+      if (*errs2 > 3) {
+          mbe_useLastMbeParms (cur_mp, prev_mp);
+          cur_mp->repeat++;
+          *err_str++ = 'R';
+      } else {
+          cur_mp->repeat = 0;
+      }
+      if (cur_mp->repeat <= 3) {
+          mbe_moveMbeParms (cur_mp, prev_mp);
+          mbe_spectralAmpEnhance (cur_mp);
+          mbe_synthesizeSpeechf (aout_buf, cur_mp, prev_mp_enhanced, uvquality);
+          mbe_moveMbeParms (cur_mp, prev_mp_enhanced);
+      } else {
+          *err_str++ = 'M';
+          mbe_synthesizeSilencef (aout_buf);
+          mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
+      }
+      *err_str = 0;
   } else {
     if (bad == 2) {
       // Erasure frame
@@ -550,5 +538,14 @@ void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, cha
     mbe_synthesizeSilencef (aout_buf);
     mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
   }
+}
+
+void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
+                                     mbe_parms *cur_mp, mbe_parms *prev_mp, mbe_parms *prev_mp_enhanced, unsigned int uvquality)
+{
+  *errs2 = mbe_eccAmbe3600x2450C0 (ambe_fr);
+  mbe_demodulateAmbe3600x2450Data (ambe_fr);
+  *errs2 += mbe_eccAmbe3600x2450Data (ambe_fr, ambe_d);
+  mbe_processAmbe2450Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 

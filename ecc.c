@@ -15,6 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdint.h>
 #include <math.h>
 #include "ecc_const.h"
 
@@ -37,6 +38,46 @@ void mbe_checkGolayBlock (unsigned int *block)
   databits = (block_l >> 11);
   databits = databits ^ golayMatrix[syndrome];
   *block = databits;
+}
+
+/* This function calculates [23,12] Golay codewords.
+   The format of the returned int is [checkbits(11),data(12)]. */
+unsigned int golay23_codeword(unsigned int cw)
+{
+  unsigned int i, c;
+  cw&=0xfffl;
+  c=cw; /* save original codeword */
+  for (i=0; i<12; i++){ /* examine each data bit */
+      if (cw & 1)        /* test data bit */
+        cw^=0xC75;        /* XOR polynomial */
+      cw>>=1;            /* shift intermediate result */
+  }
+  return((cw<<12)|c);    /* assemble codeword */
+}
+
+unsigned int mbe_hamming1511 (unsigned int block, unsigned int *out)
+{
+  unsigned int i, j, errs = 0, syndrome = 0, stmp, stmp2;
+
+  for (i = 0; i < 4; i++) {
+      syndrome <<= 1;
+      stmp = block;
+      stmp &= hammingGenerator[i];
+      stmp2 = (stmp & 1);
+      for (j = 0; j < 14; j++) {
+          stmp >>= 1;
+          stmp2 ^= (stmp & 1);
+      }
+      syndrome |= stmp2;
+  }
+
+  if (syndrome > 0) {
+      errs++;
+      block ^= (1U << (syndrome - 1));
+  }
+
+  *out = block;
+  return (errs);
 }
 
 unsigned int mbe_golay2312 (char *in, char *out)

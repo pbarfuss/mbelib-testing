@@ -21,18 +21,6 @@
 #include "mbelib.h"
 #include "imbe7200x4400_const.h"
 
-static const int hammingGenerator[4] = {
-  0x7f08, 0x78e4, 0x66d2, 0x55b1
-};
-
-static const int imbe7100x4400hammingGenerator[4] = {
-  0x7ac8, 0x3d64, 0x1eb2, 0x7591
-};
-
-static const int hammingMatrix[16] = {
-  0x0, 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000
-};
-
 int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23])
 {
   int j, errs;
@@ -49,46 +37,12 @@ int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23])
   return (errs);
 }
 
-static int mbe_hamming1511 (char *in, char *out)
-{
-  int i, j, errs = 0, block = 0, syndrome = 0, stmp, stmp2;
-
-  for (i = 14; i >= 0; i--) {
-      block <<= 1;
-      block |= in[i];
-  }
-
-  syndrome = 0;
-  for (i = 0; i < 4; i++) {
-      syndrome <<= 1;
-      stmp = block;
-      stmp &= hammingGenerator[i];
-      stmp2 = (stmp % 2);
-      for (j = 0; j < 14; j++) {
-          stmp >>= 1;
-          stmp2 ^= (stmp % 2);
-      }
-      syndrome |= stmp2;
-  }
-
-  if (syndrome > 0) {
-      errs++;
-      block ^= hammingMatrix[syndrome];
-  }
-
-  for (i = 14; i >= 0; i--) {
-      out[i] = (block & 0x4000) >> 14;
-      block = block << 1;
-  }
-  return (errs);
-}
-
 int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d)
 {
-  int i, j, errs;
-  char *imbe, gin[23], gout[23], hin[15], hout[15];
+  int i, j, errs = 0;
+  unsigned int hin, block;
+  char *imbe, gin[23], gout[23], hout[15];
 
-  errs = 0;
   imbe = imbe_d;
   for (i = 0; i < 4; i++) {
       if (i > 0) {
@@ -97,29 +51,33 @@ int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d)
           }
           errs += mbe_golay2312 (gin, gout);
           for (j = 22; j > 10; j--) {
-              *imbe = gout[j];
-              imbe++;
+              *imbe++ = gout[j];
           }
       } else {
           for (j = 22; j > 10; j--) {
-              *imbe = imbe_fr[i][j];
-              imbe++;
+              *imbe++ = imbe_fr[i][j];
           }
       }
   }
   for (i = 4; i < 7; i++) {
+      hin = 0;
       for (j = 0; j < 15; j++) {
-          hin[j] = imbe_fr[i][j];
+          hin <<= 1;
+          hin |= imbe_fr[i][14-j];
       }
-      errs += mbe_hamming1511 (hin, hout);
+
+      errs += mbe_hamming1511 (hin, &block);
+
+      for (j = 14; j >= 0; j--) {
+          hout[j] = (block & 0x4000) >> 14;
+          block = block << 1;
+      }
       for (j = 14; j >= 4; j--) {
-          *imbe = hout[j];
-          imbe++;
+          *imbe++ = hout[j];
       }
   }
   for (j = 6; j >= 0; j--) {
-      *imbe = imbe_fr[7][j];
-      imbe++;
+      *imbe++ = imbe_fr[7][j];
   }
 
   return (errs);
@@ -421,7 +379,7 @@ void mbe_demodulateImbe7200x4400Data (char imbe[8][23])
     }
 }
 
-void mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_d[88],
+void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
   int i, bad;
@@ -464,12 +422,9 @@ void mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err
 void mbe_processImbe7200x4400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88],
                                      mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
-  *errs = 0;
-  *errs2 = 0;
-  *errs = mbe_eccImbe7200x4400C0 (imbe_fr);
+  *errs2 = mbe_eccImbe7200x4400C0 (imbe_fr);
   mbe_demodulateImbe7200x4400Data (imbe_fr);
-  *errs2 = *errs;
   *errs2 += mbe_eccImbe7200x4400Data (imbe_fr, imbe_d);
-  mbe_processImbe4400Dataf (aout_buf, errs, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  mbe_processImbe4400Dataf (aout_buf, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 
