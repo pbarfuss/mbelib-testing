@@ -91,9 +91,6 @@ unsigned int mbe_golay2312 (char *in, char *out);
 /*
  * Shared between ambe3600x2400.c and ambe3600x2450.c
  */
-int mbe_eccAmbe3600x2400C0 (char ambe_fr[4][24]);
-int mbe_eccAmbe3600x2400Data (char ambe_fr[4][24], char *ambe_d);
-void mbe_demodulateAmbe3600x2400Data (char ambe_fr[4][24]);
 int mbe_eccAmbe3600x2450C0(char ambe_fr[4][24]);
 int mbe_eccAmbe3600x2450Data(char ambe_fr[4][24], char *ambe_d);
 void mbe_demodulateAmbe3600x2450Data (char ambe_fr[4][24]);

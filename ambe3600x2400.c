@@ -22,60 +22,6 @@
 #include "mbelib.h"
 #include "ambe3600x2400_const.h"
 
-int mbe_eccAmbe3600x2400C0(char ambe_fr[4][24])
-{
-  int j, errs;
-  char in[23], out[23];
-
-  for (j = 0; j < 23; j++) {
-      in[j] = ambe_fr[0][j + 1];
-  }
-  errs = mbe_golay2312 (in, out);
-  // ambe_fr[0][0] should be the C0 golay24 parity bit.
-  // TODO: actually test that here...
-  for (j = 0; j < 23; j++) {
-      ambe_fr[0][j + 1] = out[j];
-  }
-
-  return (errs);
-}
-
-int mbe_eccAmbe3600x2400Data(char ambe_fr[4][24], char *ambe_d)
-{
-  int j, errs;
-  char *ambe, gin[24], gout[24];
-
-  ambe = ambe_d;
-  // just copy C0
-  for (j = 23; j > 11; j--) {
-      *ambe++ = ambe_fr[0][j];
-  }
-
-  // ecc and copy C1
-  for (j = 0; j < 23; j++) {
-      gin[j] = ambe_fr[1][j];
-  }
-  errs = mbe_golay2312 (gin, gout);
-
-  for (j = 22; j > 10; j--) {
-      *ambe++ = gout[j];
-  }
-
-  // just copy C2
-  for (j = 10; j >= 0; j--) {
-      *ambe = ambe_fr[2][j];
-      ambe++;
-  }
-
-  // just copy C3
-  for (j = 13; j >= 0; j--) {
-      *ambe = ambe_fr[3][j];
-      ambe++;
-  }
-
-  return (errs);
-}
-
 int
 mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 {
@@ -537,33 +483,6 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   return (0);
 }
 
-void mbe_demodulateAmbe3600x2400Data (char ambe_fr[4][24])
-{
-  int i, j, k;
-  unsigned short pr[115];
-  unsigned short foo = 0;
-
-  // create pseudo-random modulator
-  for (i = 23; i >= 12; i--) {
-      foo <<= 1;
-      foo |= ambe_fr[0][i];
-  }
-  pr[0] = (16 * foo);
-  for (i = 1; i < 24; i++) {
-      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) >> 16));
-  }
-  for (i = 1; i < 24; i++) {
-      pr[i] >>= 15;
-  }
-
-  // demodulate ambe_fr with pr
-  k = 1;
-  for (j = 22; j >= 0; j--) {
-      ambe_fr[1][j] = ((ambe_fr[1][j]) ^ pr[k]);
-      k++;
-  }
-}
-
 void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
@@ -610,9 +529,9 @@ void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char 
 void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
                                      mbe_parms *cur_mp, mbe_parms *prev_mp, mbe_parms *prev_mp_enhanced, unsigned int uvquality)
 {
-  *errs2 = mbe_eccAmbe3600x2400C0 (ambe_fr);
-  mbe_demodulateAmbe3600x2400Data (ambe_fr);
-  *errs2 += mbe_eccAmbe3600x2400Data (ambe_fr, ambe_d);
+  *errs2 = mbe_eccAmbe3600x2450C0 (ambe_fr);
+  mbe_demodulateAmbe3600x2450Data (ambe_fr);
+  *errs2 += mbe_eccAmbe3600x2450Data (ambe_fr, ambe_d);
   mbe_processAmbe2400Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 
