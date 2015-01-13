@@ -70,8 +70,8 @@ static unsigned int mbe_7100x4400hamming1511 (unsigned int codeword, unsigned in
 int mbe_eccImbe7100x4400Data (char imbe_fr[7][24], char *imbe_d)
 {
   int i, j, errs;
-  unsigned int hin = 0;
-  char *imbe, gin[23], gout[23], hout[15];
+  unsigned int hin = 0, hout = 0;
+  char *imbe, gin[23], gout[23];
   errs = 0;
   imbe = imbe_d;
 
@@ -108,7 +108,7 @@ int mbe_eccImbe7100x4400Data (char imbe_fr[7][24], char *imbe_d)
           hin <<= 1;
           hin |= imbe_fr[i][14-j];
       }
-      errs += mbe_7100x4400hamming1511 (hin, hout);
+      errs += mbe_7100x4400hamming1511 (hin, &hout);
       for (j = 10; j >= 0; j--) {
           *imbe++ = (hout >> j);
       }
@@ -226,6 +226,6 @@ void mbe_processImbe7100x4400Framef (float *aout_buf, int *errs, int *errs2, cha
   mbe_demodulateImbe7100x4400Data (imbe_fr);
   *errs2 += mbe_eccImbe7100x4400Data (imbe_fr, imbe_d);
   mbe_convertImbe7100to7200 (imbe_d);
-  mbe_processImbe4400Dataf (aout_buf, errs, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  mbe_processImbe4400Dataf (aout_buf, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 
