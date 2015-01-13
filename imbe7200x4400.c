@@ -334,49 +334,33 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 
 void mbe_demodulateImbe7200x4400Data (char imbe[8][23])
 {
-
-  int i, j, k;
-  unsigned short pr[115];
-  unsigned short foo;
-  char tmpstr[24];
+  int i, j = 0, k;
+  unsigned short pr[115], foo = 0;
 
   // create pseudo-random modulator
-  j = 0;
-  tmpstr[12] = 0;
-  for (i = 22; i >= 11; i--)
-    {
-      tmpstr[j] = (imbe[0][i] + 48);
-      j++;
-    }
-  foo = strtol (tmpstr, NULL, 2);
+  for (i = 0; i < 12; i++) {
+      foo <<= 1;
+      foo |= imbe[0][11+i];
+  }
+
   pr[0] = (16 * foo);
-  for (i = 1; i < 115; i++)
-    {
-      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) / 65536));
-    }
-  for (i = 1; i < 115; i++)
-    {
-      pr[i] = pr[i] / 32768;
-    }
+  for (i = 1; i < 115; i++) {
+      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) >> 16));
+  }
+  for (i = 1; i < 115; i++) {
+      pr[i] >>= 15;
+  }
 
   // demodulate imbe with pr
   k = 1;
-  for (i = 1; i < 4; i++)
-    {
+  for (i = 1; i < 4; i++) {
       for (j = 22; j >= 0; j--)
-        {
-          imbe[i][j] = ((imbe[i][j]) ^ pr[k]);
-          k++;
-        }
-    }
-  for (i = 4; i < 7; i++)
-    {
+        imbe[i][j] ^= pr[k++];
+  }
+  for (i = 4; i < 7; i++) {
       for (j = 14; j >= 0; j--)
-        {
-          imbe[i][j] = ((imbe[i][j]) ^ pr[k]);
-          k++;
-        }
-    }
+        imbe[i][j] ^= pr[k++];
+  }
 }
 
 void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],

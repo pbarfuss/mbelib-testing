@@ -21,8 +21,8 @@
 #ifndef _ECC_H
 #define _ECC_H
 
-const unsigned int hammingGenerator[4] = {
-  0x7f08, 0x78e4, 0x66d2, 0x55b1
+const unsigned int hammingGenerator[11] = {
+    0x400f, 0x200e, 0x100d, 0x080c, 0x040b, 0x020a, 0x0109, 0x0087, 0x0046, 0x0025, 0x0013
 };
 
 const unsigned int golayGenerator[12] = {

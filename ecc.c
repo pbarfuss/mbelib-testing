@@ -57,19 +57,13 @@ unsigned int golay23_codeword(unsigned int cw)
 
 unsigned int mbe_hamming1511 (unsigned int block, unsigned int *out)
 {
-  unsigned int i, j, errs = 0, syndrome = 0, stmp, stmp2;
+  unsigned int i, errs = 0, ecc = 0, syndrome;
 
-  for (i = 0; i < 4; i++) {
-      syndrome <<= 1;
-      stmp = block;
-      stmp &= hammingGenerator[i];
-      stmp2 = (stmp & 1);
-      for (j = 0; j < 14; j++) {
-          stmp >>= 1;
-          stmp2 ^= (stmp & 1);
-      }
-      syndrome |= stmp2;
+  for(i = 0; i < 11; i++) {
+      if((block & hammingGenerator[i]) > 0xf)
+          ecc ^= hammingGenerator[i];
   }
+  syndrome = ecc ^ block;
 
   if (syndrome > 0) {
       errs++;

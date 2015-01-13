@@ -550,10 +550,10 @@ void mbe_demodulateAmbe3600x2400Data (char ambe_fr[4][24])
   }
   pr[0] = (16 * foo);
   for (i = 1; i < 24; i++) {
-      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) / 65536));
+      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) >> 16));
   }
   for (i = 1; i < 24; i++) {
-      pr[i] = pr[i] / 32768;
+      pr[i] >>= 15;
   }
 
   // demodulate ambe_fr with pr
