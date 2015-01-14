@@ -126,7 +126,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 #ifdef AMBE_DEBUG
       printf ("Silence Frame\n");
 #endif
-      cur_mp->w0 = ((float) 2 * M_PI) / (float) 32;
+      cur_mp->w0 = (1.0f / 16.0f);
       f0 = (float) 1 / (float) 32;
       L = 14;
       cur_mp->L = 14;
@@ -149,15 +149,16 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   if (silence == 0) {
       // w0 from specification document
       //f0 = AmbeW0table[b0];
-      //cur_mp->w0 = f0 * (float) 2 *M_PI;
+      //cur_mp->w0 = f0 * 2.0f;
       // w0 from patent filings
-      //f0 = expf((float)M_LN2 * ((float) b0 + (float) 195.626) / -(float) 46.368); // was 45.368
+      //f0 = 1.0f / expf((float)M_LN2 * ((float) b0 + 195.626f) / 46.368f); // was 45.368
       // w0 guess  
-      f0 = mbe_expf((float)M_LN2 * (-4.311767578125 - (2.1336e-2 * ((float)b0+0.5))));
-      cur_mp->w0 = f0 * (float) 2 *M_PI;
+      //f0 = 1.0f / mbe_expf((float)M_LN2 * (4.311767578125f - (2.1336e-2f * ((float)b0+0.5))));
+      f0 = 1.0f / mbe_expf((float)M_LN2 * (4.30109957813f - (0.021336f * (float)b0)));
+      cur_mp->w0 = f0 * 2.0f;
   }
 
-  unvc = (float) 0.2046 / mbe_sqrtf (cur_mp->w0);
+  unvc = (float) 0.2046 / mbe_sqrtf ((float)M_PI * cur_mp->w0);
   //unvc = (float) 1;
   //unvc = (float) 0.2046 / sqrtf (f0);
 
@@ -524,14 +525,5 @@ void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char 
     mbe_synthesizeSilencef (aout_buf);
     mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
   }
-}
-
-void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
-                                     mbe_parms *cur_mp, mbe_parms *prev_mp, mbe_parms *prev_mp_enhanced, unsigned int uvquality)
-{
-  *errs2 = mbe_eccAmbe3600x2450C0 (ambe_fr);
-  mbe_demodulateAmbe3600x2450Data (ambe_fr);
-  *errs2 += mbe_eccAmbe3600x2450Data (ambe_fr, ambe_d);
-  mbe_processAmbe2400Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 

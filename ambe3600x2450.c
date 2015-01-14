@@ -22,57 +22,6 @@
 #include "mbelib.h"
 #include "ambe3600x2450_const.h"
 
-int mbe_eccAmbe3600x2450C0(char ambe_fr[4][24])
-{
-  int j, errs;
-  char in[23], out[23];
-
-  for (j = 0; j < 23; j++) {
-      in[j] = ambe_fr[0][j + 1];
-  }
-  errs = mbe_golay2312 (in, out);
-  // ambe_fr[0][0] should be the C0 golay24 parity bit.
-  // TODO: actually test that here...
-  for (j = 0; j < 23; j++) {
-      ambe_fr[0][j + 1] = out[j];
-  }
-
-  return (errs);
-}
-
-int mbe_eccAmbe3600x2450Data(char ambe_fr[4][24], char *ambe_d)
-{
-  int j, errs;
-  char *ambe = ambe_d, gin[24], gout[24];
-
-  // just copy C0
-  for (j = 23; j > 11; j--) {
-      *ambe++ = ambe_fr[0][j];
-  }
-
-  // ecc and copy C1
-  for (j = 0; j < 23; j++) {
-      gin[j] = ambe_fr[1][j];
-  }
-  errs = mbe_golay2312 (gin, gout);
-
-  for (j = 22; j > 10; j--) {
-      *ambe++ = gout[j];
-  }
-
-  // just copy C2
-  for (j = 10; j >= 0; j--) {
-      *ambe++ = ambe_fr[2][j];
-  }
-
-  // just copy C3
-  for (j = 13; j >= 0; j--) {
-      *ambe++ = ambe_fr[3][j];
-  }
-
-  return (errs);
-}
-
 int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 {
   int ji, i, j, k, l, L, m, am, ak;
@@ -116,7 +65,7 @@ int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_
       printf ("Silence Frame\n");
 #endif
       silence = 1;
-      cur_mp->w0 = ((float) 2 * (float)M_PI) / (float) 32;
+      cur_mp->w0 = (1.0f / 16.0f);
       f0 = (float) 1 / (float) 32;
       L = 14;
       cur_mp->L = 14;
@@ -138,11 +87,12 @@ int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_
       // w0 from specification document
       //f0 = AmbeW0table[b0];
       // w0 using an interpolation of the above table
-      f0 = 1.0f / mbe_expf ((float)M_LN2 * ((float)b0 + 195.75f) / 45.31f);
-      cur_mp->w0 = f0 * (float) 2 *(float)M_PI;
+      //f0 = 1.0f / mbe_expf ((float)M_LN2 * ((float)b0 + 195.75f) / 45.31f);
+      f0 = 1.0f / mbe_expf ((float)M_LN2 * ((float)b0 + 195.75f) * 0.02207f);
+      cur_mp->w0 = f0 * 2.0f;
     }
 
-  unvc = (float) 0.2046 / mbe_sqrtf (cur_mp->w0);
+  unvc = (float) 0.2046 / mbe_sqrtf ((float)M_PI * cur_mp->w0);
   //unvc = (float) 1;
   //unvc = (float) 0.2046 / sqrtf (f0);
 
@@ -470,33 +420,6 @@ int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_
   return (0);
 }
 
-void mbe_demodulateAmbe3600x2450Data (char ambe_fr[4][24])
-{
-  int i, j, k;
-  unsigned short pr[115];
-  unsigned short foo = 0;
-
-  // create pseudo-random modulator
-  for (i = 23; i >= 12; i--) {
-      foo <<= 1;
-      foo |= ambe_fr[0][i];
-  }
-  pr[0] = (16 * foo);
-  for (i = 1; i < 24; i++) {
-      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) >> 16));
-  }
-  for (i = 1; i < 24; i++) {
-      pr[i] >>= 15;
-  }
-
-  // demodulate ambe_fr with pr
-  k = 1;
-  for (j = 22; j >= 0; j--) {
-      ambe_fr[1][j] = ((ambe_fr[1][j]) ^ pr[k]);
-      k++;
-  }
-}
-
 void mbe_processAmbe2450Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
@@ -538,14 +461,5 @@ void mbe_processAmbe2450Dataf (float *aout_buf, int *errs2, char *err_str, char 
     mbe_synthesizeSilencef (aout_buf);
     mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
   }
-}
-
-void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49],
-                                     mbe_parms *cur_mp, mbe_parms *prev_mp, mbe_parms *prev_mp_enhanced, unsigned int uvquality)
-{
-  *errs2 = mbe_eccAmbe3600x2450C0 (ambe_fr);
-  mbe_demodulateAmbe3600x2450Data (ambe_fr);
-  *errs2 += mbe_eccAmbe3600x2450Data (ambe_fr, ambe_d);
-  mbe_processAmbe2450Dataf (aout_buf, errs2, err_str, ambe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 

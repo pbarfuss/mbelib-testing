@@ -19,6 +19,9 @@ typedef struct
   mbe_parms cur_mp;
   mbe_parms prev_mp;
   mbe_parms prev_mp_enhanced;
+  float aout_gain;
+  float aout_max_buf[33];
+  unsigned int aout_max_buf_idx;
 } dsd_state;
 
 static int readAmbe2450Data (dsd_state *state, char *ambe_d)
@@ -78,16 +81,66 @@ static inline float av_clipf(float a, float amin, float amax)
     else               return a;
 }
 
+void
+mbe_processAGC(dsd_state * state)
+{
+  int i, n;
+  float aout_abs, max, gainfactor, gaindelta, maxbuf;
+
+  // detect max level
+  max = 0;
+  for (n = 0; n < 160; n++) {
+      aout_abs = fabsf (state->audio_out_temp_buf[n]);
+      if (aout_abs > max)
+          max = aout_abs;
+  }
+  state->aout_max_buf[state->aout_max_buf_idx++] = max;
+  if (state->aout_max_buf_idx > 24) {
+      state->aout_max_buf_idx = 0;
+  }
+
+  // lookup max history
+  for (i = 0; i < 25; i++) {
+      maxbuf = state->aout_max_buf[i];
+      if (maxbuf > max)
+          max = maxbuf;
+  }
+
+  // determine optimal gain level
+  if (max > 0.0f) {
+      //gainfactor = (30000.0f / max);
+      gainfactor = (32767.0f / max);
+  } else {
+      gainfactor = 50.0f;
+  }
+  if (gainfactor < state->aout_gain) {
+      state->aout_gain = gainfactor;
+      gaindelta = 0.0f;
+  } else {
+      if (gainfactor > 50.0f) {
+          gainfactor = 50.0f;
+      }
+      gaindelta = gainfactor - state->aout_gain;
+      if (gaindelta > (0.05f * state->aout_gain)) {
+          gaindelta = (0.05f * state->aout_gain);
+      }
+  }
+
+  // adjust output gain
+  state->aout_gain += gaindelta;
+}
+
 static void writeSynthesizedVoice (int wav_out_fd, dsd_state *state)
 {
   short aout_buf[160];
   unsigned int n;
 
+  mbe_processAGC(state);
   for (n = 0; n < 160; n++) {
     float tmp = state->audio_out_temp_buf[n];
 
-    //update_volume(&s, fabsf(tmp));
-    //tmp = av_clipf(tmp * get_volume(&s), -1.0f, 1.0f);
+    tmp *= state->aout_gain;
+    //tmp = av_clipf(tmp, -1.0f, 1.0f);
 
     if (tmp > 32767.0f) {
         tmp = 32767.0f;
@@ -161,6 +214,7 @@ int main(int argc, char **argv) {
     write_wav_header(out_fd, 8000);
 
     openMbeInFile (argv[1], &state);
+    state.aout_gain = 25;
     mbe_initMbeParms (&state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced);
     printf ("Playing %s\n", argv[1]);
     while (state.mbe_in_pos < state.mbe_in_size) {
@@ -168,7 +222,9 @@ int main(int argc, char **argv) {
         readAmbe2450Data (&state, ambe_d);
         mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
                                   &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
-        printf("decodeAmbe2400Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
+        if (state.errs2 > 0) {
+            printf("decodeAmbe2400Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
+        }
         writeSynthesizedVoice (out_fd, &state);
     }
     close(out_fd);

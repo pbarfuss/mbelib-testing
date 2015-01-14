@@ -81,44 +81,39 @@ static inline void mbe_useLastMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp)
   }
 }
 
+#if 0
 /*
  * Prototypes from ecc.c
  */
-void mbe_checkGolayBlock (unsigned int *block);
 unsigned int mbe_hamming1511 (unsigned int block, unsigned int *out);
 unsigned int mbe_golay2312 (char *in, char *out);
 
-/*
- * Shared between ambe3600x2400.c and ambe3600x2450.c
- */
 int mbe_eccAmbe3600x2450C0(char ambe_fr[4][24]);
 int mbe_eccAmbe3600x2450Data(char ambe_fr[4][24], char *ambe_d);
 void mbe_demodulateAmbe3600x2450Data (char ambe_fr[4][24]);
+
+int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23]);
+int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d);
+void mbe_demodulateImbe7200x4400Data (char imbe[8][23]);
+#endif
 
 /*
  * Prototypes from ambe3600x2400.c
  */
 void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
-void mbe_processAmbe3600x2400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from ambe3600x2450.c
  */
 void mbe_processAmbe2450Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
-void mbe_processAmbe3600x2450Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_fr[4][24], char ambe_d[49], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
- * Prototypes from ambe3600x2450.c
+ * Prototypes from imbe7200x4400.c
  */
-int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23]);
-int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d);
-void mbe_demodulateImbe7200x4400Data (char imbe[8][23]);
 void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
-void mbe_processImbe7200x4400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88],
-                                     mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
 
 /*
  * Prototypes from mbelib.c

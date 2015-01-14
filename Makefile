@@ -25,18 +25,12 @@ DEST_INC=${DEST_BASE}/include
 DEST_LIB=${DEST_BASE}/lib
 DEST_BIN=${DEST_BASE}/bin
 
-all: decode_ambe decode_imbe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o decode_imbe.o ecc.o minilibm.o imbe7100x4400.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+all: decode_ambe decode_imbe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o decode_imbe.o minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 
 build: all
 
-ecc.o:  ecc.c mbelib.h
-	$(CC) $(CFLAGS) -c ecc.c -o ecc.o $(INCLUDES)
-
 minilibm.o: minilibm.c
 	$(CC) $(CFLAGS) -c minilibm.c -o minilibm.o $(INCLUDES)
-
-imbe7100x4400.o: imbe7100x4400.c mbelib.h mbelib_const.h
-	$(CC) $(CFLAGS) -c imbe7100x4400.c -o imbe7100x4400.o $(INCLUDES)
 
 imbe7200x4400.o: imbe7200x4400.c mbelib.h mbelib_const.h imbe7200x4400_const.h
 	$(CC) $(CFLAGS) -c imbe7200x4400.c -o imbe7200x4400.o $(INCLUDES)
@@ -50,19 +44,22 @@ ambe3600x2450.o: ambe3600x2450.c mbelib.h mbelib_const.h ambe3600x2450_const.h
 mbelib.o: mbelib.c mbelib.h
 	$(CC) $(CFLAGS) -c mbelib.c -o mbelib.o $(INCLUDES)
 
+spectral_enhance.o: spectral_enhance.c
+	$(CC) $(CFLAGS) -c spectral_enhance.c -o spectral_enhance.o $(INCLUDES)
+
 decode_ambe.o: decode_ambe.c
 	$(CC) $(CFLAGS) -c decode_ambe.c -o decode_ambe.o $(INCLUDES)
 
 decode_imbe.o: decode_imbe.c
 	$(CC) $(CFLAGS) -c decode_imbe.c -o decode_imbe.o $(INCLUDES)
 
-libmbe.a: ecc.o minilibm.o imbe7100x4400.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
-	$(AR) cru libmbe.a ecc.o minilibm.o imbe7100x4400.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+libmbe.a: minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
+	$(AR) cru libmbe.a minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 	$(RANLIB) libmbe.a
 
-libmbe.so.1: ecc.o minilibm.o imbe7100x4400.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
+libmbe.so.1: minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
 	$(CC) -shared -Wl,-soname,libmbe.so.1 -o libmbe.so.1 \
-         ecc.o minilibm.o imbe7100x4400.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+         minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 
 libmbe.so: libmbe.so.1
 	rm -f libmbe.so

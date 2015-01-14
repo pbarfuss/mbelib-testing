@@ -21,68 +21,6 @@
 #include "mbelib.h"
 #include "imbe7200x4400_const.h"
 
-int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23])
-{
-  int j, errs;
-  char in[23], out[23];
-
-  for (j = 0; j < 23; j++) {
-      in[j] = imbe_fr[0][j];
-  }
-  errs = mbe_golay2312 (in, out);
-  for (j = 0; j < 23; j++) {
-      imbe_fr[0][j] = out[j];
-  }
-
-  return (errs);
-}
-
-int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d)
-{
-  int i, j, errs = 0;
-  unsigned int hin, block;
-  char *imbe, gin[23], gout[23], hout[15];
-
-  imbe = imbe_d;
-  for (i = 0; i < 4; i++) {
-      if (i > 0) {
-          for (j = 0; j < 23; j++) {
-              gin[j] = imbe_fr[i][j];
-          }
-          errs += mbe_golay2312 (gin, gout);
-          for (j = 22; j > 10; j--) {
-              *imbe++ = gout[j];
-          }
-      } else {
-          for (j = 22; j > 10; j--) {
-              *imbe++ = imbe_fr[i][j];
-          }
-      }
-  }
-  for (i = 4; i < 7; i++) {
-      hin = 0;
-      for (j = 0; j < 15; j++) {
-          hin <<= 1;
-          hin |= imbe_fr[i][14-j];
-      }
-
-      errs += mbe_hamming1511 (hin, &block);
-
-      for (j = 14; j >= 0; j--) {
-          hout[j] = (block & 0x4000) >> 14;
-          block = block << 1;
-      }
-      for (j = 14; j >= 4; j--) {
-          *imbe++ = hout[j];
-      }
-  }
-  for (j = 6; j >= 0; j--) {
-      *imbe++ = imbe_fr[7][j];
-  }
-
-  return (errs);
-}
-
 int
 mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 {
@@ -123,10 +61,12 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
       }
       return (1);
   }
-  cur_mp->w0 = ((float) (4 * (float)M_PI) / ((float) b0 + 39.5f));
+  cur_mp->w0 = (4.0f / ((float) b0 + 39.5f));
 
   // decode L from w0
-  L = (int) (0.9254f * (int) (((float)M_PI / cur_mp->w0) + 0.25f));
+  L = (int) (0.9254f * (int) ((1.0f / cur_mp->w0) + 0.25f));
+  //L = (int) (0.23135f * ((float) b0 + 40.5f));
+  //L = (int) ((0.23135f * (float) (b0 + 40)) + 0.115675f);
   if ((L > 56) || (L < 9)) {
 #ifdef IMBE_DEBUG
       printf ("invalid L: %i\n", L);
@@ -332,47 +272,14 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   return (0);
 }
 
-void mbe_demodulateImbe7200x4400Data (char imbe[8][23])
-{
-  int i, j = 0, k;
-  unsigned short pr[115], foo = 0;
-
-  // create pseudo-random modulator
-  for (i = 0; i < 12; i++) {
-      foo <<= 1;
-      foo |= imbe[0][11+i];
-  }
-
-  pr[0] = (16 * foo);
-  for (i = 1; i < 115; i++) {
-      pr[i] = (173 * pr[i - 1]) + 13849 - (65536 * (((173 * pr[i - 1]) + 13849) >> 16));
-  }
-  for (i = 1; i < 115; i++) {
-      pr[i] >>= 15;
-  }
-
-  // demodulate imbe with pr
-  k = 1;
-  for (i = 1; i < 4; i++) {
-      for (j = 22; j >= 0; j--)
-        imbe[i][j] ^= pr[k++];
-  }
-  for (i = 4; i < 7; i++) {
-      for (j = 14; j >= 0; j--)
-        imbe[i][j] ^= pr[k++];
-  }
-}
-
 void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
   int i, bad;
 
-  for (i = 0; i < *errs2; i++)
-    {
-      *err_str = '=';
-      err_str++;
-    }
+  for (i = 0; i < *errs2; i++) {
+      *err_str++ = '=';
+  }
 
   bad = mbe_decodeImbe4400Parms (imbe_d, cur_mp, prev_mp);
   if ((bad == 1) || (*errs2 > 5))
@@ -401,14 +308,5 @@ void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char 
       mbe_initMbeParms (cur_mp, prev_mp, prev_mp_enhanced);
     }
   *err_str = 0;
-}
-
-void mbe_processImbe7200x4400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88],
-                                     mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
-{
-  *errs2 = mbe_eccImbe7200x4400C0 (imbe_fr);
-  mbe_demodulateImbe7200x4400Data (imbe_fr);
-  *errs2 += mbe_eccImbe7200x4400Data (imbe_fr, imbe_d);
-  mbe_processImbe4400Dataf (aout_buf, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 
