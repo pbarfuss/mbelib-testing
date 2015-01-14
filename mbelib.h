@@ -81,22 +81,6 @@ static inline void mbe_useLastMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp)
   }
 }
 
-#if 0
-/*
- * Prototypes from ecc.c
- */
-unsigned int mbe_hamming1511 (unsigned int block, unsigned int *out);
-unsigned int mbe_golay2312 (char *in, char *out);
-
-int mbe_eccAmbe3600x2450C0(char ambe_fr[4][24]);
-int mbe_eccAmbe3600x2450Data(char ambe_fr[4][24], char *ambe_d);
-void mbe_demodulateAmbe3600x2450Data (char ambe_fr[4][24]);
-
-int mbe_eccImbe7200x4400C0 (char imbe_fr[8][23]);
-int mbe_eccImbe7200x4400Data (char imbe_fr[8][23], char *imbe_d);
-void mbe_demodulateImbe7200x4400Data (char imbe[8][23]);
-#endif
-
 /*
  * Prototypes from ambe3600x2400.c
  */
