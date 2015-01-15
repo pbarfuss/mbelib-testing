@@ -61,6 +61,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
       }
       return (1);
   }
+  cur_mp->b0 = b0;
   cur_mp->w0 = (4.0f / ((float) b0 + 39.5f));
 
   // decode L from w0

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "mbelib.h"
+void mbe_getuvcount (unsigned int *uvtypes_out);
 
 typedef struct
 {
@@ -227,6 +228,7 @@ int main(int argc, char **argv) {
     dsd_state state;
     char ambe_d[49];
     char imbe_d[88];
+    unsigned int uvcounts[4];
     unsigned int uvquality = 3;
     int out_fd = -1;
     memset(&state, 0, sizeof(dsd_state));
@@ -263,6 +265,11 @@ int main(int argc, char **argv) {
         }
         writeSynthesizedVoice (out_fd, &state);
     }
+    mbe_getuvcount(uvcounts);
+    printf("uvcount[0]: %u\n", uvcounts[0]);
+    printf("uvcount[1]: %u\n", uvcounts[1]);
+    printf("uvcount[2]: %u\n", uvcounts[2]);
+    printf("uvcount[3]: %u\n", uvcounts[3]);
     close(out_fd);
     return 0;
 }

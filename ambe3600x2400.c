@@ -126,6 +126,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 #ifdef AMBE_DEBUG
       printf ("Silence Frame\n");
 #endif
+      cur_mp->b0 = 32;
       cur_mp->w0 = (1.0f / 16.0f);
       f0 = (float) 1 / (float) 32;
       L = 14;
@@ -155,6 +156,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
       // w0 guess  
       //f0 = 1.0f / mbe_expf((float)M_LN2 * (4.311767578125f - (2.1336e-2f * ((float)b0+0.5))));
       f0 = 1.0f / mbe_expf((float)M_LN2 * (4.30109957813f - (0.021336f * (float)b0)));
+      cur_mp->b0 = b0;
       cur_mp->w0 = f0 * 2.0f;
   }
 

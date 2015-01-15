@@ -22,6 +22,7 @@
 
 typedef struct mbe_parameters
 {
+  unsigned int b0;
   float w0;
   int L;
   int K;
@@ -47,6 +48,7 @@ static inline void mbe_moveMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp)
 {
   int l;
 
+  prev_mp->b0 = cur_mp->b0;
   prev_mp->w0 = cur_mp->w0;
   prev_mp->L = cur_mp->L;
   prev_mp->K = cur_mp->K;       // necessary?
@@ -66,6 +68,7 @@ static inline void mbe_useLastMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp)
 {
   int l;
 
+  cur_mp->b0 = prev_mp->b0;
   cur_mp->w0 = prev_mp->w0;
   cur_mp->L = prev_mp->L;
   cur_mp->K = prev_mp->K;       // necessary?

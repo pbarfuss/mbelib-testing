@@ -65,6 +65,7 @@ int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_
       printf ("Silence Frame\n");
 #endif
       silence = 1;
+      cur_mp->b0 = 31;
       cur_mp->w0 = (1.0f / 16.0f);
       f0 = (float) 1 / (float) 32;
       L = 14;
@@ -89,6 +90,7 @@ int mbe_decodeAmbe2450Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_
       // w0 using an interpolation of the above table
       //f0 = 1.0f / mbe_expf ((float)M_LN2 * ((float)b0 + 195.75f) / 45.31f);
       f0 = 1.0f / mbe_expf ((float)M_LN2 * ((float)b0 + 195.75f) * 0.02207f);
+      cur_mp->b0 = b0;
       cur_mp->w0 = f0 * 2.0f;
     }
 
