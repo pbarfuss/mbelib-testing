@@ -12,6 +12,7 @@ typedef struct
 {
   unsigned char *mbe_in_data;
   unsigned int mbe_in_pos, mbe_in_size;
+  unsigned char is_imbe;
   float audio_out_temp_buf[960];
   int errs;
   int errs2;
@@ -51,6 +52,30 @@ static int readAmbe2450Data (dsd_state *state, char *ambe_d)
   return (0);
 }
 
+static int readImbe4400Data (dsd_state *state, char *imbe_d)
+{
+  int i, j, k;
+  unsigned char b;
+
+  state->errs2 = state->mbe_in_data[state->mbe_in_pos++];
+  state->errs = state->errs2;
+
+  k = 0;
+  for (i = 0; i < 11; i++) {
+      b = state->mbe_in_data[state->mbe_in_pos++];
+      if (state->mbe_in_pos >= state->mbe_in_size) {
+          return (1);
+      }
+      for (j = 0; j < 8; j++) {
+          imbe_d[k] = (b & 128) >> 7;
+          b = b << 1;
+          b = b & 255;
+          k++;
+      }
+  }
+  return (0);
+}
+
 static void openMbeInFile (const char *mbe_in_file, dsd_state *state)
 {
   struct stat st;
@@ -69,7 +94,11 @@ static void openMbeInFile (const char *mbe_in_file, dsd_state *state)
   close(mbe_in_fd);
 
   memcpy(cookie, state->mbe_in_data, 4);
-  if (memcmp(cookie, ".amb", 4)) {
+  if (!memcmp(cookie, ".amb", 4)) {
+    state->is_imbe = 0;
+  } else if (!memcmp(cookie, ".imb", 4)) {
+    state->is_imbe = 1;
+  } else {
       printf ("Error - unrecognized file type\n");
   }
 }
@@ -82,7 +111,7 @@ static inline float av_clipf(float a, float amin, float amax)
 }
 
 void
-mbe_processAGC(dsd_state * state)
+ProcessAGC(dsd_state * state)
 {
   int i, n;
   float aout_abs, max, gainfactor, gaindelta, maxbuf;
@@ -135,7 +164,7 @@ static void writeSynthesizedVoice (int wav_out_fd, dsd_state *state)
   short aout_buf[160];
   unsigned int n;
 
-  mbe_processAGC(state);
+  ProcessAGC(state);
   for (n = 0; n < 160; n++) {
     float tmp = state->audio_out_temp_buf[n];
 
@@ -197,6 +226,7 @@ static void usage(void) {
 int main(int argc, char **argv) {
     dsd_state state;
     char ambe_d[49];
+    char imbe_d[88];
     unsigned int uvquality = 3;
     int out_fd = -1;
     memset(&state, 0, sizeof(dsd_state));
@@ -219,11 +249,17 @@ int main(int argc, char **argv) {
     printf ("Playing %s\n", argv[1]);
     while (state.mbe_in_pos < state.mbe_in_size) {
         char *err_str = state.err_str;
-        readAmbe2450Data (&state, ambe_d);
-        mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
+        if (state.is_imbe) {
+          readImbe4400Data (&state, imbe_d);
+          mbe_processImbe4400Dataf (state.audio_out_temp_buf, &state.errs2, err_str, imbe_d,
                                   &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+        } else {
+          readAmbe2450Data (&state, ambe_d);
+          mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
+                                  &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+        }
         if (state.errs2 > 0) {
-            printf("decodeAmbe2400Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
+            printf("decodeAmbe2450Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
         }
         writeSynthesizedVoice (out_fd, &state);
     }

@@ -25,7 +25,7 @@ DEST_INC=${DEST_BASE}/include
 DEST_LIB=${DEST_BASE}/lib
 DEST_BIN=${DEST_BASE}/bin
 
-all: decode_ambe decode_imbe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o decode_imbe.o minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
+all: decode_ambe libmbe.a libmbe.so.1 libmbe.so decode_ambe.o minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 
 build: all
 
@@ -50,9 +50,6 @@ spectral_enhance.o: spectral_enhance.c
 decode_ambe.o: decode_ambe.c
 	$(CC) $(CFLAGS) -c decode_ambe.c -o decode_ambe.o $(INCLUDES)
 
-decode_imbe.o: decode_imbe.c
-	$(CC) $(CFLAGS) -c decode_imbe.c -o decode_imbe.o $(INCLUDES)
-
 libmbe.a: minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o mbelib.h mbelib_const.h imbe7200x4400_const.h
 	$(AR) cru libmbe.a minilibm.o spectral_enhance.o imbe7200x4400.o ambe3600x2400.o ambe3600x2450.o mbelib.o
 	$(RANLIB) libmbe.a
@@ -68,9 +65,6 @@ libmbe.so: libmbe.so.1
 decode_ambe: decode_ambe.o libmbe.a
 	$(CC) -o decode_ambe decode_ambe.o libmbe.a
 
-decode_imbe: decode_imbe.o libmbe.a
-	$(CC) -o decode_imbe decode_imbe.o libmbe.a
-
 clean:
 	rm -f *.o
 	rm -f *.a
@@ -82,7 +76,6 @@ install: libmbe.a libmbe.so.1 libmbe.so
 	$(INSTALL) libmbe.so.1 $(DEST_LIB)
 	$(INSTALL) libmbe.so $(DEST_LIB)
 	$(INSTALL) decode_ambe $(DEST_BIN)
-	$(INSTALL) decode_imbe $(DEST_BIN)
 	$(LDCONFIG) $(DEST_LIB)
 
 uninstall: 
@@ -91,5 +84,4 @@ uninstall:
 	rm -f $(DEST_LIB)/libmbe.so.1
 	rm -f $(DEST_LIB)/libmbe.so
 	rm -f $(DEST_BIN)/decode_ambe
-	rm -f $(DEST_BIN)/decode_imbe
 
