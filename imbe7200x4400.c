@@ -220,7 +220,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   printf ("T1: %e\n", Tl[1]);
 #endif
 
-  // determine log2Ml by applying ci,j to previous log2Ml 
+  // determine log2Ml by applying ci,j to previous log2Ml
   if (cur_mp->L <= 15) {
       rho = 0.4f;
   } else if (cur_mp->L <= 24) {
@@ -273,7 +273,7 @@ mbe_decodeImbe4400Parms (char *imbe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   return (0);
 }
 
-void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],
+void mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_d[88],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
   int i, bad;

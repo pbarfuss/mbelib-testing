@@ -24,7 +24,6 @@
 #include "mbelib.h"
 #include "mbelib_const.h"
 static AVLFG c;
-static unsigned int uvtypes[4];
 
 typedef union _f32 {
     float f;
@@ -107,7 +106,6 @@ void mbe_initMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev
   gettimeofday(&tv, NULL);
   lfg_srand(&c, tv.tv_sec);
 
-  uvtypes[3] = uvtypes[2] = uvtypes[1] = uvtypes[0] = 0;
   prev_mp->b0 = 78;
   prev_mp->w0 = 0.0298511f;
   prev_mp->L = 30;
@@ -126,14 +124,6 @@ void mbe_initMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev
   mbe_moveMbeParms (prev_mp, prev_mp_enhanced);
 }
 
-void mbe_getuvcount (unsigned int *uvtypes_out)
-{
-    uvtypes_out[0] = uvtypes[0];
-    uvtypes_out[1] = uvtypes[1];
-    uvtypes_out[2] = uvtypes[2];
-    uvtypes_out[3] = uvtypes[3];
-}
-
 void mbe_synthesizeSilencef (float *aout_buf)
 {
   unsigned int n;
@@ -143,41 +133,7 @@ void mbe_synthesizeSilencef (float *aout_buf)
   }
 }
 
-static const float
-C1  = -5.0000000000e-01,
-C2  =  4.1666667908e-02, /* 0x3d2aaaab */
-C3  = -1.3888889225e-03, /* 0xbab60b61 */
-C4  =  2.4801587642e-05, /* 0x37d00d01 */
-C5  = -2.7557314297e-07, /* 0xb493f27c */
-C6  =  2.0875723372e-09, /* 0x310f74f6 */
-C7  = -1.1359647598e-11; /* 0xad47d74e */
-
-// Differs from libc cosf on [0, pi/2] by at most 0.0000001229f
-// Differs from libc cosf on [0, pi] by at most 0.0000035763f
-static inline float k_cosf(float x)
-{
-    float z;
-    z = x*x;
-    return (1.0f+z*(C1+z*(C2+z*(C3+z*(C4+z*(C5+z*(C6+z*C7)))))));
-}
-
-static float mbe_debug_cosf(float x, float rphase)
-{
-    float y[2], z;;
-    uint32_t n;
-    //fprintf(stderr, "cosf: %.5f\n", x);
-    //x += rphase;
-    n = (uint32_t)x;
-    y[0] = (x - (float)n);
-    y[0] *= (float)M_PI;
-    z = k_cosf(y[0]);
-    if (n&1) {
-        z = -z;
-    }
-    return rphase * z;
-}
-
-int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev_mp, int uvquality)
+void mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev_mp, int uvquality)
 {
   int i, l, n, maxl;
   float *Ss, loguvquality;
@@ -201,7 +157,7 @@ int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev
 #ifdef MBE_DEBUG
       printf ("\nmbelib:  Error - uvquality must be within the range 1 - 64\n");
 #endif
-      return -1;
+    uvquality = 3;
   }
 
   // calculate loguvquality
@@ -274,7 +230,6 @@ int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev
               C3 = 0;
               // unvoiced multisine mix
               for (i = 0; i < uvquality; i++) {
-                  uvtypes[1]++;
                   // float tmp;
                   // tmp = (mbe_cosf((float)M_PI * cw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)) *
                   //        mbe_cosf(rphase[i])) +
@@ -302,7 +257,6 @@ int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev
               C3 = 0;
               // unvoiced multisine mix
               for (i = 0; i < uvquality; i++) {
-                  uvtypes[2]++;
                   C3 = C3 + mbe_cosf (((float)M_PI * pw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)) + rphase[i]);
                   if (pw0l > uvthreshold) {
                       C3 = C3 + ((float)M_PI * (pw0l - uvthreshold) * 2.0f * mbe_rand());
@@ -315,8 +269,7 @@ int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev
 //      } else if (((cur_mp->Vl[l] == 1) || (prev_mp->Vl[l] == 1)) && ((l >= 8) || (fabsf (cw0 - pw0) >= ((float) 0.1 * cw0)))) {
       } else if ((cur_mp->Vl[l] == 1) || (prev_mp->Vl[l] == 1)) {
           Ss = aout_buf;
-          for (n = 0; n < N; n++) { 
-              uvtypes[0]++;
+          for (n = 0; n < N; n++) {
               C1 = 0;
               // eq 133-1
               C1 = Ws[n + N] * prev_mp->Ml[l] * mbe_cosf (((float)M_PI * pw0l * (float) n) + prev_mp->PHIl[l]);
@@ -354,26 +307,27 @@ int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev
           }
           for (n = 0; n < N; n++) {
               C3 = 0;
+              // unvoiced multisine mix
+              for (i = 0; i < uvquality; i++) {
+                  C3 = C3 + mbe_cosf (((float)M_PI * pw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)) + rphase[i]);
+                  if (pw0l > uvthreshold) {
+                      C3 = C3 + ((float)M_PI * (pw0l - uvthreshold) * 2.0f * mbe_rand());
+                  }
+              }
+              C3 = C3 * uvsine * Ws[n + N] * prev_mp->Ml[l] * qfactor;
               C4 = 0;
               // unvoiced multisine mix
               for (i = 0; i < uvquality; i++) {
-                  uvtypes[3] += 2;
-                  C3 += mbe_debug_cosf ((pw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)), rphase[i]);
-                  C4 += mbe_debug_cosf ((cw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)), rphase2[i]);
-                  if (pw0l > uvthreshold) {
-                      C3 += ((float)M_PI * (pw0l - uvthreshold) * 2.0f * mbe_rand());
-                  }
+                  C4 = C4 + mbe_cosf (((float)M_PI * cw0 * (float) n * ((float) l + ((float) i * uvstep) - uvoffset)) + rphase2[i]);
                   if (cw0l > uvthreshold) {
-                      C4 += ((float)M_PI * (cw0l - uvthreshold) * 2.0f * mbe_rand());
+                      C4 = C4 + ((float)M_PI * (cw0l - uvthreshold) * 2.0f * mbe_rand());
                   }
               }
-              C3 *= uvsine * Ws[n + N] * prev_mp->Ml[l] * qfactor;
-              C4 *= uvsine * Ws[n] * cur_mp->Ml[l] * qfactor;
+              C4 = C4 * uvsine * Ws[n] * cur_mp->Ml[l] * qfactor;
               *Ss += C3 + C4;
               Ss++;
           }
       }
   }
-  return 0;
 }
 

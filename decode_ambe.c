@@ -228,7 +228,6 @@ int main(int argc, char **argv) {
     dsd_state state;
     char ambe_d[49];
     char imbe_d[88];
-    unsigned int uvcounts[4];
     unsigned int uvquality = 3;
     int out_fd = -1;
     memset(&state, 0, sizeof(dsd_state));
@@ -250,26 +249,22 @@ int main(int argc, char **argv) {
     mbe_initMbeParms (&state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced);
     printf ("Playing %s\n", argv[1]);
     while (state.mbe_in_pos < state.mbe_in_size) {
+        int errs = 0;
         char *err_str = state.err_str;
         if (state.is_imbe) {
           readImbe4400Data (&state, imbe_d);
-          mbe_processImbe4400Dataf (state.audio_out_temp_buf, &state.errs2, err_str, imbe_d,
-                                  &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+          mbe_processImbe4400Dataf (state.audio_out_temp_buf, &errs, &state.errs2, err_str, imbe_d,
+                                    &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
         } else {
           readAmbe2450Data (&state, ambe_d);
-          mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &state.errs2, err_str, ambe_d,
-                                  &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
+          mbe_processAmbe2450Dataf (state.audio_out_temp_buf, &errs, &state.errs2, err_str, ambe_d,
+                                    &state.cur_mp, &state.prev_mp, &state.prev_mp_enhanced, uvquality);
         }
         if (state.errs2 > 0) {
             printf("decodeAmbe2450Parms: errs2: %u, err_str: %s\n", state.errs2, state.err_str);
         }
         writeSynthesizedVoice (out_fd, &state);
     }
-    mbe_getuvcount(uvcounts);
-    printf("uvcount[0]: %u\n", uvcounts[0]);
-    printf("uvcount[1]: %u\n", uvcounts[1]);
-    printf("uvcount[2]: %u\n", uvcounts[2]);
-    printf("uvcount[3]: %u\n", uvcounts[3]);
     close(out_fd);
     return 0;
 }

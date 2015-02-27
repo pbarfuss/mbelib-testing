@@ -44,7 +44,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 
   // copy repeat from prev_mp
   cur_mp->repeat = prev_mp->repeat;
-  
+
   // check if frame is tone or other; this matches section 7.2 on the P25 Half rate vocoder annex doc
   b0 = 0;
   b0 |= ambe_d[0]<<6;
@@ -74,7 +74,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
     int t6tab[8] = {0,0,0,1,1,1,1,0};
     int t5tab[8] = {0,0,1,0,1,1,0,1};
     //              V V V V V G G G     V = verified, G = guessed (and unused by all normal tone indices)
-    b1 = 0; 
+    b1 = 0;
     b1 |= t7tab[((ambe_d[6]<<2)|(ambe_d[7]<<1)|ambe_d[8])]<<7; //t7 128
     b1 |= t6tab[((ambe_d[6]<<2)|(ambe_d[7]<<1)|ambe_d[8])]<<6; //t6 64
     b1 |= t5tab[((ambe_d[6]<<2)|(ambe_d[7]<<1)|ambe_d[8])]<<5; //t5 32
@@ -144,16 +144,16 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   //fprintf(stderr,"Voice Frame, Pitch = %f\n", powf(2, ((float)b0+195.626)/-46.368)*8000); // was 45.368
   //fprintf(stderr,"Voice Frame, rawPitch = %02d, Pitch = %f\n", b0, powf(2, ((-1*(float)(17661/((int)1<<12))) - (2.1336e-2 * ((float)b0+0.5))))*8000);
   //fprintf(stderr,"Voice Frame, Pitch = %f, ", powf(2, (-4.311767578125 - (2.1336e-2 * ((float)b0+0.5))))*8000);
- 
+
   // decode fundamental frequency w0 from b0 is already done
- 
+
   if (silence == 0) {
       // w0 from specification document
       //f0 = AmbeW0table[b0];
       //cur_mp->w0 = f0 * 2.0f;
       // w0 from patent filings
       //f0 = 1.0f / expf((float)M_LN2 * ((float) b0 + 195.626f) / 46.368f); // was 45.368
-      // w0 guess  
+      // w0 guess
       //f0 = 1.0f / mbe_expf((float)M_LN2 * (4.311767578125f - (2.1336e-2f * ((float)b0+0.5))));
       f0 = 1.0f / mbe_expf((float)M_LN2 * (4.30109957813f - (0.021336f * (float)b0)));
       cur_mp->b0 = b0;
@@ -166,7 +166,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
 
   // decode L
   if (silence == 0) {
-      // L from specification document 
+      // L from specification document
       // lookup L in tabl3
       L = AmbePlusLtable[b0];
       // L formula from patent filings
@@ -486,7 +486,7 @@ mbe_decodeAmbe2400Parms (char *ambe_d, mbe_parms * cur_mp, mbe_parms * prev_mp)
   return (0);
 }
 
-void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
+void mbe_processAmbe2400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality)
 {
   unsigned int i, bad;

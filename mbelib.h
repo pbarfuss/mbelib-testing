@@ -87,19 +87,19 @@ static inline void mbe_useLastMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp)
 /*
  * Prototypes from ambe3600x2400.c
  */
-void mbe_processAmbe2400Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
+void mbe_processAmbe2400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from ambe3600x2450.c
  */
-void mbe_processAmbe2450Dataf (float *aout_buf, int *errs2, char *err_str, char ambe_d[49],
+void mbe_processAmbe2450Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char ambe_d[49],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, unsigned int uvquality);
 
 /*
  * Prototypes from imbe7200x4400.c
  */
-void mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88],
+void mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_d[88],
                                mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality);
 
 /*
@@ -113,6 +113,6 @@ void mbe_printVersion (char *str);
 void mbe_initMbeParms (mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced);
 void mbe_spectralAmpEnhance (mbe_parms * cur_mp);
 void mbe_synthesizeSilencef (float *aout_buf);
-int mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev_mp, int uvquality);
+void mbe_synthesizeSpeechf (float *aout_buf, mbe_parms * cur_mp, mbe_parms * prev_mp, int uvquality);
 
 #endif
